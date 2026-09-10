@@ -1,0 +1,5 @@
+build/
+.svelte-kit/
+src/lib/generated/papers.json
+package-lock.json
+/legacy-docs
