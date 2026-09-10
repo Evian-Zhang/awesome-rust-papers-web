@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--color-rust-50: #fdf4ef;
+	--color-rust-100: #f9e6dc;
+	--color-rust-200: #f2c9b4;
+	--color-rust-300: #e8a684;
+	--color-rust-400: #dd7d51;
+	--color-rust-500: #d05c2c;
+	--color-rust-600: #b7410e;
+	--color-rust-700: #9a360c;
+	--color-rust-800: #7d2d10;
+	--color-rust-900: #652611;
+	--color-rust-950: #31150b;
+	--font-sans:
+		ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+		'Noto Sans', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+:root {
+	color-scheme: light;
+}
+
+.dark {
+	color-scheme: dark;
+}
+
+@layer components {
+	.control {
+		@apply h-9 rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-800 focus-visible:border-rust-600 focus-visible:ring-2 focus-visible:ring-rust-600/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:focus-visible:border-rust-400;
+	}
+
+	.card-action {
+		@apply inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-600 hover:border-rust-600 hover:text-rust-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-400;
+	}
+
+	.dropdown-panel {
+		@apply absolute top-full left-0 z-20 mt-1 rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900;
+	}
+
+	.dropdown-option {
+		@apply block w-full px-3 py-1.5 text-left text-sm text-gray-800 hover:bg-rust-50 hover:text-rust-700 dark:text-gray-200 dark:hover:bg-rust-950 dark:hover:text-rust-300;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+body {
+	@apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+}
+
+input,
+select,
+button {
+	font-family: inherit;
+}
+
+:where(a, button, [role='tab'], [role='option'], [tabindex]):focus-visible {
+	outline: 2px solid var(--color-rust-500);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+:where(input, select, textarea):focus-visible {
+	outline: 2px solid var(--color-rust-500);
+	outline-offset: -2px;
+}
+
+@keyframes shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-3px);
+	}
+	75% {
+		transform: translateX(3px);
+	}
+}
+
+.shake {
+	animation: shake 0.3s ease-in-out;
+}
