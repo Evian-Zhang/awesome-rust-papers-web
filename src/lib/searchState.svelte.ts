@@ -164,6 +164,14 @@ export const searchState = {
 		syncToUrl('push');
 		return true;
 	},
+	searchFor(query: string) {
+		draftSearchQuery = query;
+		searchQuery = query;
+		draftQueryTree = EMPTY_TREE();
+		queryTree = EMPTY_TREE();
+		validationErrors = NO_ERRORS;
+		syncToUrl('push');
+	},
 	clearAll() {
 		draftSearchQuery = '';
 		draftQueryTree = EMPTY_TREE();
