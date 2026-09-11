@@ -3,6 +3,7 @@
 	import ExternalLink from 'lucide-svelte/icons/external-link';
 	import { onDestroy } from 'svelte';
 	import { paperById } from '$lib/data';
+	import { searchState } from '$lib/searchState.svelte';
 	import PaperName from './PaperName.svelte';
 	import type { Paper } from '$lib/types';
 
@@ -48,6 +49,22 @@
 		expanded = expanded === key ? null : key;
 	}
 
+	// Plain left click performs an in-page fresh search (?q=title, no filters);
+	// modified clicks (new tab etc.) fall through to the native anchor.
+	function searchForPaper(event: MouseEvent, title: string) {
+		if (
+			event.defaultPrevented ||
+			event.button !== 0 ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.shiftKey ||
+			event.altKey
+		)
+			return;
+		event.preventDefault();
+		searchState.searchFor(title);
+	}
+
 	async function copyBib() {
 		if (!paper.bib) return;
 		try {
@@ -87,13 +104,18 @@
 			<span aria-hidden="true">·</span>
 		{/if}
 		<span class="tabular-nums">{paper.year}</span>
-		{#each paper.categories as category (category)}
+		{#if paper.categories.length > 0}
 			<span
-				class="rounded bg-rust-50 px-1.5 py-0.5 text-[11px] font-medium text-rust-700 dark:bg-rust-950 dark:text-rust-300"
+				class="inline-flex items-center gap-1 rounded bg-rust-50 px-1.5 py-0.5 text-[11px] font-medium text-rust-700 dark:bg-rust-950 dark:text-rust-300"
 			>
-				{category}
+				{#each paper.categories as category, index (category)}
+					{#if index > 0}
+						<span aria-hidden="true" class="text-rust-400/80 dark:text-rust-400">›</span>
+					{/if}
+					<span>{category}</span>
+				{/each}
 			</span>
-		{/each}
+		{/if}
 		{#each paper.tags as tag (tag)}
 			<span
 				class="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-600 dark:bg-gray-800 dark:text-gray-300"
@@ -208,12 +230,15 @@
 					{#each expandedGroup.ids as id (id)}
 						{@const related = paperById.get(id)}
 						{#if related}
-							<PaperName
-								entry={related}
-								href={related.links.link}
-								year={related.year}
+							<!-- eslint-disable svelte/no-navigation-without-resolve -- query-only relative href, inherently base-path safe -->
+							<a
+								href={`?q=${encodeURIComponent(related.title)}`}
+								onclick={(e) => searchForPaper(e, related.title)}
 								class="block rounded px-1.5 py-0.5 text-xs leading-relaxed text-gray-700 hover:bg-rust-50 hover:text-rust-700 dark:text-gray-300 dark:hover:bg-rust-950 dark:hover:text-rust-300"
-							/>
+							>
+								<PaperName entry={related} year={related.year} />
+							</a>
+							<!-- eslint-enable svelte/no-navigation-without-resolve -->
 						{/if}
 					{/each}
 					{#each expandedGroup.external as name (name)}
