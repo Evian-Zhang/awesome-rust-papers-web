@@ -40,6 +40,6 @@
 	},
 	"dependencies": {
 		"echarts": "^6.1.0",
-		"lucide-svelte": "^1.0.0"
+		"lucide-svelte": "^1.0.1"
 	}
 }
