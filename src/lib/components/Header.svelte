@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Github from 'lucide-svelte/icons/github';
-	import Moon from 'lucide-svelte/icons/moon';
-	import Sun from 'lucide-svelte/icons/sun';
+	import Moon from '@lucide/svelte/icons/moon';
+	import Sun from '@lucide/svelte/icons/sun';
+	import { siGithub } from 'simple-icons';
 	import { onMount } from 'svelte';
 	import { theme } from '$lib/theme.svelte';
 
@@ -57,7 +57,11 @@
 				rel="noreferrer"
 				title="Star on GitHub"
 			>
-				<Github size={16} />
+				<!-- GitHub brand mark — brand logos are out of scope for lucide; path data
+			     comes from simple-icons (lucide's recommended brand icon source) -->
+				<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+					<path d={siGithub.path} />
+				</svg>
 				Star
 				{#if stars !== null}
 					<span

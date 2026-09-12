@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import X from 'lucide-svelte/icons/x';
+	import X from '@lucide/svelte/icons/x';
 	let condSeq = 0;
 	let groupSeq = 0;
 
