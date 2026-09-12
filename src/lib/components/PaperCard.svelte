@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ChevronDown from 'lucide-svelte/icons/chevron-down';
-	import ExternalLink from 'lucide-svelte/icons/external-link';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import { onDestroy } from 'svelte';
 	import { paperById } from '$lib/data';
 	import { searchState } from '$lib/searchState.svelte';

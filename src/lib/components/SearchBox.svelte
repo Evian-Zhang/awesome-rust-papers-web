@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Search from 'lucide-svelte/icons/search';
-	import X from 'lucide-svelte/icons/x';
+	import Search from '@lucide/svelte/icons/search';
+	import X from '@lucide/svelte/icons/x';
 	import { searchState } from '$lib/searchState.svelte';
 	import { serializeQuery } from '$lib/query/serialize';
 	import type { Snippet } from 'svelte';

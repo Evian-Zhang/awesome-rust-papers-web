@@ -1,5 +1,5 @@
 <script lang="ts">
-	import X from 'lucide-svelte/icons/x';
+	import X from '@lucide/svelte/icons/x';
 	import { paperById, searchAutocomplete } from '$lib/data';
 	import { fieldById } from '$lib/query/fields';
 	import { clampToViewport, clickOutside, listboxKeys } from '$lib/attachments';
