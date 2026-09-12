@@ -32,6 +32,6 @@ export function searchPapers(query: string): SearchResult[] {
 		const score = scorePaper(paper, tokens);
 		if (score >= 0) results.push({ paper, score });
 	}
-	results.sort((a, b) => b.score - a.score || a.paper.year - b.paper.year);
+	results.sort((a, b) => b.score - a.score || b.paper.year - a.paper.year);
 	return results;
 }
