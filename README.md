@@ -7,13 +7,17 @@ Built with SvelteKit + Svelte 5 + TypeScript + Tailwind CSS + ECharts, fully sta
 ## Prerequisites
 
 - Node.js >= 23.6 and npm
-- To refresh the data snapshot (`src/lib/generated/papers.json`): Python >= 3.8 and a
-  clone of the data repo (any location works):
+- Python >= 3.8 and a clone of the
+  [data repo](https://github.com/Evian-Zhang/awesome-rust-papers) (any location works).
+  The generated data snapshot (`src/lib/generated/papers.json`) is not committed, so
+  generate it before running `dev`, `check`, `test:logic` or `build`:
 
   ```bash
   git clone https://github.com/Evian-Zhang/awesome-rust-papers
   python3 awesome-rust-papers/scripts/build-web-data.py --out src/lib/generated
   ```
+
+  Re-run the command after data changes.
 
 ## Development
 
@@ -29,7 +33,7 @@ npm run test:logic   # advanced-search logic tests (node, no test framework)
 ## Build & deploy
 
 ```bash
-npm run build        # static output in build/ (uses the committed snapshot)
+npm run build        # static output in build/ (from the generated snapshot)
 npm run preview      # serve the build output locally
 ```
 
