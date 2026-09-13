@@ -3,3 +3,4 @@ build/
 src/lib/generated/papers.json
 package-lock.json
 /legacy-docs
+/data
