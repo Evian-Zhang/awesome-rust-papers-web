@@ -30,6 +30,20 @@
 		and compared-with are first-class query dimensions.
 	</p>
 
+	<p class="text-sm text-gray-600 dark:text-gray-400">
+		Using an AI agent? The repository ships an
+		<a
+			href="https://github.com/Evian-Zhang/awesome-rust-papers#agents"
+			target="_blank"
+			rel="noreferrer"
+			class="font-medium text-rust-600 hover:underline dark:text-rust-400"
+		>
+			agent skill
+		</a>
+		and a Python library for searching papers, running counts, and tracing relations — try asking "which
+		papers cite RustBelt?".
+	</p>
+
 	<SearchBox>
 		{#snippet advanced()}
 			<QueryBuilder />
