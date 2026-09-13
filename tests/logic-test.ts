@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import { parseXml, XmlElement, XmlText } from '@rgrove/parse-xml';
 import { papers } from '../src/lib/data.ts';
+import { buildFeed } from '../src/lib/feed.ts';
+import { SITE_URL } from '../src/lib/site.ts';
 import { evalQueryTree } from '../src/lib/query/evaluate.ts';
 import { decodeTreeParam, encodeTreeParam, serializeQuery } from '../src/lib/query/serialize.ts';
 import { collectInvalidConditions, isConditionComplete } from '../src/lib/query/validate.ts';
@@ -218,5 +221,78 @@ assert.equal(
 	0,
 	'bad items -> empty tree'
 );
+
+// --- Atom feed ---
+// parseXml throws on malformed XML, so parsing also gates feed well-formedness.
+assert.ok(
+	papers.every((p) => typeof p.addedAt === 'string' && p.addedAt.length > 0),
+	'every paper has an addedAt date'
+);
+const feed = buildFeed(papers);
+const feedRoot = parseXml(feed).root;
+assert.ok(feedRoot, 'feed has a root element');
+assert.equal(feedRoot.name, 'feed');
+assert.equal(feedRoot.attributes.xmlns, 'http://www.w3.org/2005/Atom');
+
+const elements = (parent: XmlElement, name: string) =>
+	parent.children.filter(
+		(child): child is XmlElement => child instanceof XmlElement && child.name === name
+	);
+const text = (element: XmlElement) =>
+	element.children
+		.filter((child) => child instanceof XmlText)
+		.map((child) => child.text)
+		.join('');
+const child = (parent: XmlElement, name: string) => {
+	const [found] = elements(parent, name);
+	assert.ok(found, `missing <${name}>`);
+	return found;
+};
+
+const selfLink = elements(feedRoot, 'link').find((link) => link.attributes.rel === 'self');
+assert.ok(selfLink, 'feed has a rel=self link');
+assert.equal(selfLink.attributes.href, `${SITE_URL}/feed.xml`);
+
+const maxAddedAt = papers.map((p) => Date.parse(p.addedAt)).reduce((a, b) => Math.max(a, b));
+assert.equal(
+	Date.parse(text(child(feedRoot, 'updated'))),
+	maxAddedAt,
+	'feed updated is the newest addedAt'
+);
+
+const entries = elements(feedRoot, 'entry');
+assert.equal(entries.length, papers.length, 'feed includes every paper');
+
+const byId = new Map(papers.map((paper) => [paper.id, paper]));
+const entryOrder = entries.map((entry) => {
+	const urn = text(child(entry, 'id'));
+	assert.ok(urn.startsWith('urn:awesome-rust-papers:'), `unexpected entry id ${urn}`);
+	const paper = requireCandidate(
+		`paper for ${urn}`,
+		byId.get(urn.replace('urn:awesome-rust-papers:', ''))
+	);
+	assert.equal(text(child(entry, 'title')), paper.title, 'entry title matches the paper');
+	const link = new URL(child(entry, 'link').attributes.href);
+	assert.equal(`${link.origin}${link.pathname}`, `${SITE_URL}/`, 'entry link points at the site');
+	assert.equal(link.searchParams.get('q'), paper.title, 'entry link opens the in-site search');
+	assert.equal(
+		Date.parse(text(child(entry, 'updated'))),
+		Date.parse(paper.addedAt),
+		'entry date is the paper addedAt'
+	);
+	assert.ok(text(child(entry, 'summary')).length > 0, 'entry has a summary');
+	return paper;
+});
+assert.equal(new Set(entryOrder.map((p) => p.id)).size, papers.length, 'entry ids are unique');
+
+for (let i = 1; i < entryOrder.length; i++) {
+	const prev = entryOrder[i - 1];
+	const cur = entryOrder[i];
+	assert.ok(Date.parse(prev.addedAt) >= Date.parse(cur.addedAt), 'entries sorted by addedAt desc');
+	if (Date.parse(prev.addedAt) === Date.parse(cur.addedAt)) {
+		assert.ok(prev.title <= cur.title, 'same-date entries sorted by title asc');
+	}
+}
+assert.equal(buildFeed(papers), feed, 'feed build is deterministic');
 
 console.log('all logic tests passed');

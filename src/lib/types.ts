@@ -22,6 +22,7 @@ export interface Paper {
 	alias?: string | null;
 	venue?: string | null;
 	year: number;
+	addedAt: string;
 	categories: string[];
 	tags: string[];
 	links: PaperLinks;

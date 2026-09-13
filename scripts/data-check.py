@@ -11,6 +11,7 @@
 import json
 import sys
 
+from datetime import datetime
 from pathlib import Path
 
 PAPERS_JSON = Path(__file__).resolve().parent.parent / "src" / "lib" / "generated" / "papers.json"
@@ -28,6 +29,17 @@ RESOLVED_RELATION_KEYS = (
 def is_plain_int(value):
     # bool is a subclass of int in Python — exclude it explicitly.
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def is_iso_datetime(value):
+    # Parses, not just shape-matches: rejects impossible calendar values.
+    if not isinstance(value, str):
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
+    except ValueError:
+        return False
+    return True
 
 
 def check_string_array(paper_id, key, value):
@@ -65,6 +77,9 @@ def main():
         assert paper["alias"] is None or isinstance(paper["alias"], str), f"{pid}: bad alias"
         assert paper["venue"] is None or isinstance(paper["venue"], str), f"{pid}: bad venue"
         assert paper["bib"] is None or isinstance(paper["bib"], str), f"{pid}: bad bib"
+        assert "addedAt" in paper, f"{pid}: missing addedAt"
+        added_at = paper["addedAt"]
+        assert is_iso_datetime(added_at), f"{pid}: bad addedAt {added_at!r}"
         assert isinstance(paper["links"]["further"], list), f"{pid}: links.further is not an array"
 
         for key in RESOLVED_RELATION_KEYS:

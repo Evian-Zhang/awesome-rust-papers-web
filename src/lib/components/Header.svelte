@@ -1,8 +1,10 @@
 <script lang="ts">
 	import Moon from '@lucide/svelte/icons/moon';
+	import Rss from '@lucide/svelte/icons/rss';
 	import Sun from '@lucide/svelte/icons/sun';
 	import { siGithub } from 'simple-icons';
 	import { onMount } from 'svelte';
+	import { base } from '$app/paths';
 	import { theme } from '$lib/theme.svelte';
 
 	const REPO = 'Evian-Zhang/awesome-rust-papers';
@@ -50,6 +52,16 @@
 					<Moon size={16} />
 				{/if}
 			</button>
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- static endpoint href, explicitly base-prefixed -->
+			<a
+				class="rounded-md border border-gray-300 bg-white p-2 text-gray-600 hover:border-rust-600 hover:text-rust-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-400"
+				href={`${base}/feed.xml`}
+				aria-label="RSS feed"
+				title="RSS feed"
+			>
+				<Rss size={16} />
+			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			<a
 				class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:border-rust-600 hover:text-rust-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-300"
 				href="https://github.com/Evian-Zhang/awesome-rust-papers"
