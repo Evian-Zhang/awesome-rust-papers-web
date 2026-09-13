@@ -11,6 +11,12 @@ export function displayName(paper: Pick<Paper, 'alias' | 'title'>): string {
 	return paper.alias ?? paper.title;
 }
 
+export function compareByAddedAtThenTitle(a: Paper, b: Paper): number {
+	const diff = Date.parse(b.addedAt) - Date.parse(a.addedAt);
+	if (diff !== 0) return diff;
+	return a.title.localeCompare(b.title);
+}
+
 export interface AutocompleteCandidate {
 	id: string;
 	label: string;

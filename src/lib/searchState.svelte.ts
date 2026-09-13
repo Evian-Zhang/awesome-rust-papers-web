@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { papers } from '$lib/data';
+import { compareByAddedAtThenTitle, papers } from '$lib/data';
 import { searchPapers, type SearchResult } from '$lib/search';
 import { evalQueryTree, hasConditions } from '$lib/query/evaluate';
 import { collectInvalidConditions } from '$lib/query/validate';
@@ -53,12 +53,12 @@ const filteredResults = $derived.by(() => {
 			break;
 		case 'yearDesc':
 			results.sort(
-				(a, b) => b.paper.year - a.paper.year || a.paper.title.localeCompare(b.paper.title)
+				(a, b) => b.paper.year - a.paper.year || compareByAddedAtThenTitle(a.paper, b.paper)
 			);
 			break;
 		case 'yearAsc':
 			results.sort(
-				(a, b) => a.paper.year - b.paper.year || a.paper.title.localeCompare(b.paper.title)
+				(a, b) => a.paper.year - b.paper.year || compareByAddedAtThenTitle(a.paper, b.paper)
 			);
 			break;
 		case 'titleAsc':
@@ -68,7 +68,7 @@ const filteredResults = $derived.by(() => {
 			results.sort(
 				(a, b) =>
 					b.paper.relations.referencedBy.length - a.paper.relations.referencedBy.length ||
-					b.paper.year - a.paper.year
+					compareByAddedAtThenTitle(a.paper, b.paper)
 			);
 			break;
 	}

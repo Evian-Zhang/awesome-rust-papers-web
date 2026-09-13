@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { parseXml, XmlElement, XmlText } from '@rgrove/parse-xml';
-import { papers } from '../src/lib/data.ts';
+import { compareByAddedAtThenTitle, papers } from '../src/lib/data.ts';
 import { buildFeed } from '../src/lib/feed.ts';
 import { SITE_URL } from '../src/lib/site.ts';
 import { evalQueryTree } from '../src/lib/query/evaluate.ts';
@@ -221,6 +221,17 @@ assert.equal(
 	0,
 	'bad items -> empty tree'
 );
+
+// --- Sort tie-breaking: addedAt desc, then title asc ---
+const sortedByRecency = [...papers].sort(compareByAddedAtThenTitle);
+for (let i = 1; i < sortedByRecency.length; i++) {
+	const prev = sortedByRecency[i - 1];
+	const cur = sortedByRecency[i];
+	assert.ok(Date.parse(prev.addedAt) >= Date.parse(cur.addedAt), 'addedAt desc');
+	if (Date.parse(prev.addedAt) === Date.parse(cur.addedAt)) {
+		assert.ok(prev.title.localeCompare(cur.title) <= 0, 'same addedAt -> title asc');
+	}
+}
 
 // --- Atom feed ---
 // parseXml throws on malformed XML, so parsing also gates feed well-formedness.

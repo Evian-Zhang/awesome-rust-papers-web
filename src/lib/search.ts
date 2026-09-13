@@ -1,4 +1,4 @@
-import { papers as allPapers } from './data.ts';
+import { compareByAddedAtThenTitle, papers as allPapers } from './data.ts';
 import type { Paper } from '$lib/types';
 
 export interface SearchResult {
@@ -32,6 +32,6 @@ export function searchPapers(query: string): SearchResult[] {
 		const score = scorePaper(paper, tokens);
 		if (score >= 0) results.push({ paper, score });
 	}
-	results.sort((a, b) => b.score - a.score || b.paper.year - a.paper.year);
+	results.sort((a, b) => b.score - a.score || compareByAddedAtThenTitle(a.paper, b.paper));
 	return results;
 }
