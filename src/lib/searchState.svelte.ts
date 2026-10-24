@@ -92,8 +92,7 @@ function buildUrl(): string {
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- one-shot scratch object, stringified and discarded within this function; SvelteURLSearchParams would only add proxy overhead
 	const params = new URLSearchParams();
 	if (mode === 'advanced') {
-		params.set('mode', 'advanced');
-		if (hasConditions(queryTree)) params.set('f', encodeTreeParam(queryTree));
+		params.set('f', encodeTreeParam(queryTree));
 	} else {
 		const q = searchQuery.trim();
 		if (q) params.set('q', q);
@@ -113,11 +112,8 @@ function syncToUrl(historyMode: 'push' | 'replace' = 'replace') {
 function loadFromUrl() {
 	if (!browser) return;
 	const params = new URLSearchParams(location.search);
-	const modeParam = params.get('mode');
 	const hasTree = params.has('f');
-	// Old links with only `f` are treated as advanced.
-	const nextMode: SearchMode =
-		modeParam === 'advanced' || (modeParam === null && hasTree) ? 'advanced' : 'text';
+	const nextMode: SearchMode = hasTree ? 'advanced' : 'text';
 	const q = params.get('q') ?? '';
 	const tree = hasTree ? decodeTreeParam(params.get('f')!) : EMPTY_TREE();
 	const sortParam = params.get('sort');

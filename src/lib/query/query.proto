@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package awesome_rust_papers.query.v1;
+
+// One serialized advanced-search query tree. UI-only identifiers (the
+// `id` fields used for keyed rendering and validation highlighting) are
+// intentionally not part of the wire format and are regenerated on decode.
+message QueryTree {
+  // Bump when the wire format changes incompatibly. The current version is 1.
+  uint32 version = 1;
+  repeated GroupItem items = 2;
+}
+
+message GroupItem {
+  Connector connector = 1;
+  bool negated = 2;
+  Node node = 3;
+}
+
+message Node {
+  oneof kind {
+    Group group = 1;
+    Condition condition = 2;
+  }
+}
+
+message Group {
+  repeated GroupItem items = 1;
+}
+
+message Condition {
+  string field = 1;
+  Operator operator = 2;
+  repeated Value values = 3;
+}
+
+message Value {
+  oneof kind {
+    string text = 1;
+    int32 number = 2;
+  }
+}
+
+enum Connector {
+  CONNECTOR_UNSPECIFIED = 0;
+  CONNECTOR_AND = 1;
+  CONNECTOR_OR = 2;
+}
+
+enum Operator {
+  OPERATOR_UNSPECIFIED = 0;
+  OPERATOR_EQ = 1;
+  OPERATOR_GTE = 2;
+  OPERATOR_LTE = 3;
+  OPERATOR_CONTAINS = 4;
+}

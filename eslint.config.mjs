@@ -27,6 +27,6 @@ export default [
 		}
 	},
 	{
-		ignores: ['build/**', '.svelte-kit/**']
+		ignores: ['build/**', '.svelte-kit/**', 'src/lib/query/gen/**']
 	}
 ];

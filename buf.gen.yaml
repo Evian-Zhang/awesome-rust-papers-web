@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: src/lib/query/gen
+    opt:
+      - target=js+dts

@@ -1,3 +1,4 @@
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf';
 import type {
 	Condition,
 	ConditionGroup,
@@ -8,6 +9,15 @@ import type {
 } from '$lib/types';
 import { paperById } from '../data.ts';
 import { OPERATOR_SYMBOLS, fieldById } from './fields.ts';
+import * as pb from './gen/query_pb.js';
+
+const PROTO_VERSION = 1;
+const MAX_ENCODED_LENGTH = 8192;
+const MAX_DECODED_BYTES = 8192;
+const MAX_ITEMS = 200;
+const MAX_DEPTH = 10;
+const MAX_VALUES = 8;
+const MAX_VALUE_LENGTH = 256;
 
 function titleWithAlias(id: string): string {
 	const paper = paperById.get(id);
@@ -47,60 +57,192 @@ export function serializeQuery(tree: QueryTree): string {
 	return serializeGroup(tree);
 }
 
-function sanitizeTree(input: unknown): QueryTree {
-	let condSeq = 0;
-	let groupSeq = 0;
-	let itemSeq = 0;
+function opToProto(op: ConditionOp): pb.Operator {
+	switch (op) {
+		case 'gte':
+			return pb.Operator.GTE;
+		case 'lte':
+			return pb.Operator.LTE;
+		case 'contains':
+			return pb.Operator.CONTAINS;
+		default:
+			return pb.Operator.EQ;
+	}
+}
 
-	const walkGroup = (value: unknown): ConditionGroup => {
-		const obj = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
-		const rawItems = Array.isArray(obj.items) ? obj.items : [];
-		const items: GroupItem[] = [];
-		for (const raw of rawItems) {
-			if (!raw || typeof raw !== 'object') continue;
-			const it = raw as Record<string, unknown>;
-			if (!it.node || typeof it.node !== 'object') continue;
-			const node = it.node as Record<string, unknown>;
-			let clean: QueryNode | null = null;
-			if (Array.isArray(node.items)) {
-				clean = walkGroup(node);
-			} else if (
-				typeof node.field === 'string' &&
-				typeof node.op === 'string' &&
-				Array.isArray(node.values)
-			) {
-				clean = {
-					id: `c-${++condSeq}`,
-					field: node.field,
-					op: ['eq', 'gte', 'lte', 'contains'].includes(node.op) ? (node.op as ConditionOp) : 'eq',
-					values: node.values.filter((v) => typeof v === 'string' || typeof v === 'number')
-				};
-			}
-			if (!clean) continue;
-			items.push({
-				id: `i-${++itemSeq}`,
-				connector: it.connector === 'OR' ? 'OR' : 'AND',
-				not: it.not === true,
-				node: clean
-			});
-		}
-		return { id: `g-${++groupSeq}`, items };
-	};
+function opFromProto(op: pb.Operator): ConditionOp | null {
+	switch (op) {
+		case pb.Operator.EQ:
+			return 'eq';
+		case pb.Operator.GTE:
+			return 'gte';
+		case pb.Operator.LTE:
+			return 'lte';
+		case pb.Operator.CONTAINS:
+			return 'contains';
+		default:
+			return null;
+	}
+}
 
-	const root = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
-	if (root.id !== 'root' || !Array.isArray(root.items)) return { id: 'root', items: [] };
-	return { id: 'root', items: walkGroup(root).items };
+function encodeValue(value: string | number): pb.Value {
+	if (typeof value === 'number') {
+		return create(pb.ValueSchema, {
+			kind: { case: 'number', value: Number.isFinite(value) ? Math.trunc(value) : 0 }
+		});
+	}
+	return create(pb.ValueSchema, { kind: { case: 'text', value } });
+}
+
+function encodeCondition(cond: Condition): pb.Condition {
+	return create(pb.ConditionSchema, {
+		field: cond.field,
+		operator: opToProto(cond.op),
+		values: cond.values.map(encodeValue)
+	});
+}
+
+function encodeItem(item: GroupItem): pb.GroupItem {
+	const node =
+		'items' in item.node
+			? create(pb.NodeSchema, {
+					kind: {
+						case: 'group',
+						value: create(pb.GroupSchema, {
+							items: item.node.items.map(encodeItem)
+						})
+					}
+				})
+			: create(pb.NodeSchema, {
+					kind: { case: 'condition', value: encodeCondition(item.node) }
+				});
+	return create(pb.GroupItemSchema, {
+		connector: item.connector === 'OR' ? pb.Connector.OR : pb.Connector.AND,
+		negated: item.not,
+		node
+	});
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+	let binary = '';
+	const chunkSize = 0x8000;
+	for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+		binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+	}
+	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBytes(value: string): Uint8Array {
+	const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+	const padding = (4 - (base64.length % 4)) % 4;
+	const binary = atob(base64 + '='.repeat(padding));
+	const bytes = new Uint8Array(binary.length);
+	for (let index = 0; index < binary.length; index++) {
+		bytes[index] = binary.charCodeAt(index);
+	}
+	return bytes;
 }
 
 export function encodeTreeParam(tree: QueryTree): string {
-	return encodeURIComponent(JSON.stringify(tree));
+	const message = create(pb.QueryTreeSchema, {
+		version: PROTO_VERSION,
+		items: tree.items.map(encodeItem)
+	});
+	return bytesToBase64Url(toBinary(pb.QueryTreeSchema, message));
+}
+
+interface DecodeCounter {
+	items: number;
+	itemIds: number;
+	groupIds: number;
+	conditionIds: number;
+}
+
+function decodeValue(value: pb.Value, specKind: 'number' | 'text' | 'enum' | 'relation') {
+	if (value.kind?.case === 'number') {
+		if (specKind !== 'number' || !Number.isSafeInteger(value.kind.value)) return undefined;
+		return value.kind.value;
+	}
+	if (value.kind?.case === 'text') {
+		if (specKind === 'number' || value.kind.value.length > MAX_VALUE_LENGTH) return undefined;
+		return value.kind.value;
+	}
+	return undefined;
+}
+
+function decodeCondition(cond: pb.Condition, counter: DecodeCounter): Condition | null {
+	const spec = fieldById.get(cond.field);
+	if (!spec) return null;
+	const op = opFromProto(cond.operator);
+	if (!op || !spec.operators.some((candidate) => candidate.id === op)) return null;
+
+	const values: (string | number)[] = [];
+	for (const value of cond.values) {
+		if (values.length >= MAX_VALUES) break;
+		const decoded = decodeValue(value, spec.kind);
+		if (decoded !== undefined) values.push(decoded);
+	}
+	if (values.length === 0) return null;
+
+	return { id: `c-${++counter.conditionIds}`, field: cond.field, op, values };
+}
+
+function decodeNode(
+	node: pb.Node | undefined,
+	depth: number,
+	counter: DecodeCounter
+): QueryNode | null {
+	if (!node || node.kind.case === undefined) return null;
+	if (node.kind.case === 'group') {
+		if (depth >= MAX_DEPTH) return null;
+		return {
+			id: `g-${++counter.groupIds}`,
+			items: decodeItems(node.kind.value.items, depth + 1, counter)
+		};
+	}
+	if (node.kind.case === 'condition') {
+		return decodeCondition(node.kind.value, counter);
+	}
+	return null;
+}
+
+function decodeItem(item: pb.GroupItem, depth: number, counter: DecodeCounter): GroupItem | null {
+	if (counter.items >= MAX_ITEMS) return null;
+	counter.items++;
+	const node = decodeNode(item.node, depth, counter);
+	if (!node) return null;
+	return {
+		id: `i-${++counter.itemIds}`,
+		connector: item.connector === pb.Connector.OR ? 'OR' : 'AND',
+		not: item.negated,
+		node
+	};
+}
+
+function decodeItems(items: pb.GroupItem[], depth: number, counter: DecodeCounter): GroupItem[] {
+	const decoded: GroupItem[] = [];
+	for (const item of items) {
+		if (counter.items >= MAX_ITEMS) break;
+		const next = decodeItem(item, depth, counter);
+		if (next) decoded.push(next);
+	}
+	return decoded;
+}
+
+function emptyTree(): QueryTree {
+	return { id: 'root', items: [] };
 }
 
 export function decodeTreeParam(param: string): QueryTree {
-	if (!param) return { id: 'root', items: [] };
+	if (!param || param.length > MAX_ENCODED_LENGTH) return emptyTree();
 	try {
-		return sanitizeTree(JSON.parse(decodeURIComponent(param)));
+		const bytes = base64UrlToBytes(param);
+		if (bytes.length > MAX_DECODED_BYTES) return emptyTree();
+		const message = fromBinary(pb.QueryTreeSchema, bytes);
+		if (message.version !== PROTO_VERSION) return emptyTree();
+		const counter: DecodeCounter = { items: 0, itemIds: 0, groupIds: 0, conditionIds: 0 };
+		return { id: 'root', items: decodeItems(message.items, 0, counter) };
 	} catch {
-		return { id: 'root', items: [] };
+		return emptyTree();
 	}
 }

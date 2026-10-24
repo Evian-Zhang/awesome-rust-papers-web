@@ -28,7 +28,11 @@ npm run check        # svelte-check
 npm run lint         # eslint
 npm run format       # prettier (write)
 npm run test:logic   # advanced-search logic tests (node, no test framework)
+npm run proto:generate  # regenerate src/lib/query/gen (also runs before dev/check/test/build)
 ```
+
+Generated protobuf code under `src/lib/query/gen/` is not committed; the `dev`,
+`check`, `test:logic` and `build` scripts regenerate it automatically.
 
 ## Build & deploy
 

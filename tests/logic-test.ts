@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { create, toBinary } from '@bufbuild/protobuf';
 import { parseXml, XmlElement, XmlText } from '@rgrove/parse-xml';
 import { compareByAddedAtThenTitle, papers } from '../src/lib/data.ts';
 import { buildFeed } from '../src/lib/feed.ts';
 import { SITE_URL } from '../src/lib/site.ts';
 import { evalQueryTree } from '../src/lib/query/evaluate.ts';
 import { decodeTreeParam, encodeTreeParam, serializeQuery } from '../src/lib/query/serialize.ts';
+import * as pb from '../src/lib/query/gen/query_pb.js';
 import { collectInvalidConditions, isConditionComplete } from '../src/lib/query/validate.ts';
 import type { ConditionGroup, ConditionOp, QueryNode } from '../src/lib/types.ts';
 
@@ -209,17 +211,53 @@ const urlTree = tree([
 ]);
 const roundTrip = decodeTreeParam(encodeTreeParam(urlTree));
 assert.deepEqual(serializeQuery(roundTrip), serializeQuery(urlTree), 'tree param round-trip');
+assert.match(
+	encodeTreeParam(urlTree),
+	/^[A-Za-z0-9_-]+$/,
+	'tree param is base64url without padding'
+);
 assert.equal(decodeTreeParam('').items.length, 0, 'empty param -> empty tree');
 assert.equal(decodeTreeParam('garbage').items.length, 0, 'malformed param -> empty tree');
+assert.equal(decodeTreeParam('!!!!').items.length, 0, 'invalid base64url -> empty tree');
+assert.equal(decodeTreeParam('A'.repeat(9000)).items.length, 0, 'oversized param -> empty tree');
 assert.equal(
 	decodeTreeParam(encodeURIComponent('[1,2,3]')).items.length,
 	0,
-	'non-tree json -> empty tree'
+	'old JSON param is no longer accepted'
+);
+
+const protoBytes = (message: pb.QueryTree) =>
+	Buffer.from(toBinary(pb.QueryTreeSchema, message)).toString('base64url');
+assert.equal(
+	decodeTreeParam(protoBytes(create(pb.QueryTreeSchema, { version: 2, items: [] }))).items.length,
+	0,
+	'unsupported protocol version -> empty tree'
 );
 assert.equal(
-	decodeTreeParam(encodeURIComponent(JSON.stringify({ id: 'root', items: 'nope' }))).items.length,
+	decodeTreeParam(
+		protoBytes(
+			create(pb.QueryTreeSchema, {
+				version: 1,
+				items: [
+					create(pb.GroupItemSchema, {
+						connector: pb.Connector.AND,
+						node: create(pb.NodeSchema, {
+							kind: {
+								case: 'condition',
+								value: create(pb.ConditionSchema, {
+									field: 'not-a-real-field',
+									operator: pb.Operator.EQ,
+									values: [create(pb.ValueSchema, { kind: { case: 'text', value: 'x' } })]
+								})
+							}
+						})
+					})
+				]
+			})
+		)
+	).items.length,
 	0,
-	'bad items -> empty tree'
+	'unknown condition field -> dropped'
 );
 
 // --- Sort tie-breaking: addedAt desc, then title asc ---
