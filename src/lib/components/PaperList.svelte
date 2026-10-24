@@ -10,7 +10,7 @@
 	];
 
 	const sortOptions = $derived(
-		searchState.searchQuery.trim() !== ''
+		searchState.mode === 'text' && searchState.searchQuery.trim() !== ''
 			? [{ value: 'relevance' as SortOrder, label: 'Relevance' }, ...BASE_SORT_OPTIONS]
 			: BASE_SORT_OPTIONS
 	);

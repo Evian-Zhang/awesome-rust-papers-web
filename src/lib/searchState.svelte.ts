@@ -4,7 +4,7 @@ import { searchPapers, type SearchResult } from '$lib/search';
 import { evalQueryTree, hasConditions } from '$lib/query/evaluate';
 import { collectInvalidConditions } from '$lib/query/validate';
 import { decodeTreeParam, encodeTreeParam } from '$lib/query/serialize';
-import type { QueryTree } from '$lib/types';
+import type { QueryTree, SearchMode } from '$lib/types';
 
 export type SortOrder = 'relevance' | 'yearDesc' | 'yearAsc' | 'titleAsc' | 'referencedByDesc';
 
@@ -31,6 +31,17 @@ const NO_ERRORS: Set<string> = new Set();
 let validationErrors = $state<Set<string>>(NO_ERRORS);
 
 let sortOrder = $state<SortOrder>('yearDesc');
+// Text search and the advanced query tree are mutually exclusive: only the
+// active mode participates in evaluation and URL serialization. The other
+// mode keeps its applied state in memory, so switching tabs restores it.
+let mode = $state<SearchMode>('text');
+
+// Relevance is only meaningful while an applied text query is active.
+function normalizeSortOrder() {
+	if (sortOrder === 'relevance' && (mode !== 'text' || searchQuery.trim() === '')) {
+		sortOrder = 'yearDesc';
+	}
+}
 
 interface FilteredResult {
 	paper: SearchResult['paper'];
@@ -38,14 +49,16 @@ interface FilteredResult {
 }
 
 const filteredResults = $derived.by(() => {
-	const query = searchQuery.trim();
+	const query = mode === 'text' ? searchQuery.trim() : '';
 	let results: FilteredResult[];
 	if (query) {
 		results = searchPapers(query).map(({ paper, score }) => ({ paper, score }));
 	} else {
 		results = papers.map((paper) => ({ paper, score: 0 }));
 	}
-	results = results.filter(({ paper }) => evalQueryTree(paper, queryTree));
+	if (mode === 'advanced') {
+		results = results.filter(({ paper }) => evalQueryTree(paper, queryTree));
+	}
 
 	const effectiveSort: SortOrder = sortOrder === 'relevance' && !query ? 'yearDesc' : sortOrder;
 	switch (effectiveSort) {
@@ -78,36 +91,52 @@ const filteredResults = $derived.by(() => {
 function buildUrl(): string {
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- one-shot scratch object, stringified and discarded within this function; SvelteURLSearchParams would only add proxy overhead
 	const params = new URLSearchParams();
-	const q = searchQuery.trim();
-	if (q) params.set('q', q);
-	if (hasConditions(queryTree)) params.set('f', encodeTreeParam(queryTree));
+	if (mode === 'advanced') {
+		params.set('mode', 'advanced');
+		if (hasConditions(queryTree)) params.set('f', encodeTreeParam(queryTree));
+	} else {
+		const q = searchQuery.trim();
+		if (q) params.set('q', q);
+	}
 	if (sortOrder !== 'yearDesc') params.set('sort', sortOrder);
 	const query = params.toString();
 	return query ? `?${query}` : location.pathname;
 }
 
-function syncToUrl(mode: 'push' | 'replace' = 'replace') {
+function syncToUrl(historyMode: 'push' | 'replace' = 'replace') {
 	if (!browser) return;
 	const url = buildUrl();
-	if (mode === 'push') history.pushState(null, '', url);
+	if (historyMode === 'push') history.pushState(null, '', url);
 	else history.replaceState(null, '', url);
 }
 
 function loadFromUrl() {
 	if (!browser) return;
 	const params = new URLSearchParams(location.search);
+	const modeParam = params.get('mode');
+	const hasTree = params.has('f');
+	// Old links with only `f` are treated as advanced.
+	const nextMode: SearchMode =
+		modeParam === 'advanced' || (modeParam === null && hasTree) ? 'advanced' : 'text';
 	const q = params.get('q') ?? '';
-	const tree = params.has('f') ? decodeTreeParam(params.get('f')!) : EMPTY_TREE();
+	const tree = hasTree ? decodeTreeParam(params.get('f')!) : EMPTY_TREE();
 	const sortParam = params.get('sort');
 	const sort =
 		sortParam && SORT_ORDERS.includes(sortParam as SortOrder)
 			? (sortParam as SortOrder)
 			: 'yearDesc';
-	draftSearchQuery = q;
-	searchQuery = q;
-	draftQueryTree = tree;
-	queryTree = tree;
+	mode = nextMode;
+	// Only the active mode's applied state is encoded in the URL; leave the
+	// other mode's in-memory state alone so back/forward keeps it intact.
+	if (nextMode === 'text') {
+		draftSearchQuery = q;
+		searchQuery = q;
+	} else {
+		draftQueryTree = tree;
+		queryTree = tree;
+	}
 	sortOrder = sort;
+	normalizeSortOrder();
 	validationErrors = NO_ERRORS;
 }
 
@@ -136,6 +165,9 @@ export const searchState = {
 		draftQueryTree = value;
 		validationErrors = NO_ERRORS;
 	},
+	get mode() {
+		return mode;
+	},
 	get sortOrder() {
 		return sortOrder;
 	},
@@ -150,25 +182,32 @@ export const searchState = {
 		return validationErrors;
 	},
 	get hasActiveFilters() {
-		return searchQuery.trim() !== '' || hasConditions(queryTree);
+		return mode === 'text' ? searchQuery.trim() !== '' : hasConditions(queryTree);
 	},
-	applySearch(): boolean {
-		const invalid = collectInvalidConditions(draftQueryTree);
-		if (invalid.size > 0) {
-			validationErrors = invalid;
-			return false;
+	applySearch(nextMode: SearchMode): boolean {
+		if (nextMode === 'advanced') {
+			const invalid = collectInvalidConditions(draftQueryTree);
+			if (invalid.size > 0) {
+				validationErrors = invalid;
+				return false;
+			}
+			queryTree = draftQueryTree;
+		} else {
+			searchQuery = draftSearchQuery;
 		}
+		mode = nextMode;
+		normalizeSortOrder();
 		validationErrors = NO_ERRORS;
-		searchQuery = draftSearchQuery;
-		queryTree = draftQueryTree;
 		syncToUrl('push');
 		return true;
 	},
 	searchFor(query: string) {
+		mode = 'text';
 		draftSearchQuery = query;
 		searchQuery = query;
 		draftQueryTree = EMPTY_TREE();
 		queryTree = EMPTY_TREE();
+		normalizeSortOrder();
 		validationErrors = NO_ERRORS;
 		syncToUrl('push');
 	},
@@ -177,12 +216,14 @@ export const searchState = {
 		draftQueryTree = EMPTY_TREE();
 		searchQuery = '';
 		queryTree = EMPTY_TREE();
+		normalizeSortOrder();
 		validationErrors = NO_ERRORS;
 		syncToUrl('push');
 	},
 	clearSearch() {
 		draftSearchQuery = '';
 		searchQuery = '';
+		normalizeSortOrder();
 		syncToUrl('push');
 	},
 	clearFilters() {

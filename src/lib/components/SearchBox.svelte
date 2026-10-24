@@ -7,18 +7,21 @@
 
 	let { advanced }: { advanced?: Snippet } = $props();
 
-	let advancedOpen = $state(false);
 	let serialized = $derived(serializeQuery(searchState.draftQueryTree));
+	// Writable derived: tab clicks override the applied mode until the next
+	// Search (or history navigation) changes it.
+	let advancedOpen = $derived(searchState.mode === 'advanced');
 	let dirty = $derived(
-		searchState.draftSearchQuery.trim() !== searchState.searchQuery.trim() ||
-			serializeQuery(searchState.draftQueryTree) !== serializeQuery(searchState.queryTree)
+		advancedOpen !== (searchState.mode === 'advanced') ||
+			(advancedOpen
+				? serializeQuery(searchState.draftQueryTree) !== serializeQuery(searchState.queryTree)
+				: searchState.draftSearchQuery.trim() !== searchState.searchQuery.trim())
 	);
 	let searchFailed = $state(false);
 	let failedTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function runSearch() {
-		if (!searchState.applySearch()) {
-			advancedOpen = true;
+		if (!searchState.applySearch(advancedOpen ? 'advanced' : 'text')) {
 			searchFailed = true;
 			clearTimeout(failedTimer);
 			failedTimer = setTimeout(() => (searchFailed = false), 1600);
@@ -89,18 +92,6 @@
 			>
 				{serialized || 'No conditions yet'}
 			</span>
-			{#if searchState.searchQuery.trim()}
-				<button
-					type="button"
-					class="flex h-7 max-w-56 shrink-0 items-center gap-1 rounded-full border border-gray-300 bg-white px-2 text-xs text-gray-700 hover:border-rust-600 hover:text-rust-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-300"
-					onclick={() => searchState.clearSearch()}
-					title="Remove text search"
-					aria-label="Remove text search"
-				>
-					<span class="truncate">"{searchState.searchQuery.trim()}"</span>
-					<X size={12} class="shrink-0" />
-				</button>
-			{/if}
 		{/if}
 		<button
 			type="button"

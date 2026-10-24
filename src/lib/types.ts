@@ -46,6 +46,8 @@ export interface PaperData {
 
 export type ConditionOp = 'eq' | 'gte' | 'lte' | 'contains';
 
+export type SearchMode = 'text' | 'advanced';
+
 export interface Condition {
 	id: string;
 	field: string;
