@@ -1,5 +1,5 @@
-import { papers } from '$lib/data';
-import { buildFeed } from '$lib/feed';
+import { papers } from '#lib/data.ts';
+import { buildFeed } from '#lib/feed.ts';
 
 export const prerender = true;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { searchState, type SortOrder } from '$lib/searchState.svelte';
+	import { searchState, type SortOrder } from '#lib/searchState.svelte.ts';
 	import PaperCard from './PaperCard.svelte';
 
 	const BASE_SORT_OPTIONS: { value: SortOrder; label: string }[] = [

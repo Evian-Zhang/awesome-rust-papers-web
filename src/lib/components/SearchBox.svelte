@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Search from '@lucide/svelte/icons/search';
 	import X from '@lucide/svelte/icons/x';
-	import { searchState } from '$lib/searchState.svelte';
-	import { serializeQuery } from '$lib/query/serialize';
+	import { searchState } from '#lib/searchState.svelte.ts';
+	import { serializeQuery } from '#lib/query/serialize.ts';
 	import type { Snippet } from 'svelte';
 
 	let { advanced }: { advanced?: Snippet } = $props();

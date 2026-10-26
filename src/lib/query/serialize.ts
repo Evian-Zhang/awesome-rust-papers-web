@@ -6,7 +6,7 @@ import type {
 	GroupItem,
 	QueryNode,
 	QueryTree
-} from '$lib/types';
+} from '#lib/types.ts';
 import { paperById } from '../data.ts';
 import { OPERATOR_SYMBOLS, fieldById } from './fields.ts';
 import * as pb from './gen/query_pb.js';

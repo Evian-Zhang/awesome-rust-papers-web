@@ -13,9 +13,9 @@
 </script>
 
 <script lang="ts">
-	import { FIELDS, fieldById } from '$lib/query/fields';
-	import { clickOutside, listboxKeys } from '$lib/attachments';
-	import type { Condition, ConditionGroup, GroupItem } from '$lib/types';
+	import { FIELDS, fieldById } from '#lib/query/fields.ts';
+	import { clickOutside, listboxKeys } from '#lib/attachments.ts';
+	import type { Condition, ConditionGroup, GroupItem } from '#lib/types.ts';
 	import ConditionRow from './ConditionRow.svelte';
 	import GroupEditor from './GroupEditor.svelte';
 

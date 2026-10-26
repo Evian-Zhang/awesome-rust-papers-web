@@ -1,6 +1,6 @@
 import { relationIds } from '../data.ts';
 import { FIELDS } from './fields.ts';
-import type { Condition, ConditionGroup, GroupItem, Paper, QueryTree } from '$lib/types';
+import type { Condition, ConditionGroup, GroupItem, Paper, QueryTree } from '#lib/types.ts';
 
 const relationFields = new Set(
 	FIELDS.filter((field) => field.kind === 'relation').map((field) => field.id)

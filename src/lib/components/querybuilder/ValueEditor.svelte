@@ -1,10 +1,10 @@
 <script lang="ts">
 	import X from '@lucide/svelte/icons/x';
-	import { paperById, searchAutocomplete } from '$lib/data';
-	import { fieldById } from '$lib/query/fields';
-	import { clampToViewport, clickOutside, listboxKeys } from '$lib/attachments';
+	import { paperById, searchAutocomplete } from '#lib/data.ts';
+	import { fieldById } from '#lib/query/fields.ts';
+	import { clampToViewport, clickOutside, listboxKeys } from '#lib/attachments.ts';
 	import PaperName from '../PaperName.svelte';
-	import type { Condition } from '$lib/types';
+	import type { Condition } from '#lib/types.ts';
 
 	let {
 		condition,

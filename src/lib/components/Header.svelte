@@ -4,8 +4,8 @@
 	import Sun from '@lucide/svelte/icons/sun';
 	import { siGithub } from 'simple-icons';
 	import { onMount } from 'svelte';
-	import { base } from '$app/paths';
-	import { theme } from '$lib/theme.svelte';
+	import { resolve } from '$app/paths';
+	import { theme } from '#lib/theme.svelte.ts';
 
 	const REPO = 'Evian-Zhang/awesome-rust-papers';
 	let stars: string | null = $state(null);
@@ -55,7 +55,7 @@
 			<!-- eslint-disable svelte/no-navigation-without-resolve -- static endpoint href, explicitly base-prefixed -->
 			<a
 				class="rounded-md border border-gray-300 bg-white p-2 text-gray-600 hover:border-rust-600 hover:text-rust-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-400"
-				href={`${base}/feed.xml`}
+				href={resolve('/feed.xml')}
 				aria-label="RSS feed"
 				title="RSS feed"
 			>

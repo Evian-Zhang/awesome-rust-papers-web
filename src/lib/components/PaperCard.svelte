@@ -2,10 +2,10 @@
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import { onDestroy } from 'svelte';
-	import { paperById } from '$lib/data';
-	import { searchState } from '$lib/searchState.svelte';
+	import { paperById } from '#lib/data.ts';
+	import { searchState } from '#lib/searchState.svelte.ts';
 	import PaperName from './PaperName.svelte';
-	import type { Paper } from '$lib/types';
+	import type { Paper } from '#lib/types.ts';
 
 	let { paper }: { paper: Paper } = $props();
 

@@ -1,5 +1,5 @@
 import { compareByAddedAtThenTitle, papers as allPapers } from './data.ts';
-import type { Paper } from '$lib/types';
+import type { Paper } from '#lib/types.ts';
 
 export interface SearchResult {
 	paper: Paper;

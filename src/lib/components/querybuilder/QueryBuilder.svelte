@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { searchState } from '$lib/searchState.svelte';
-	import type { ConditionGroup } from '$lib/types';
+	import { searchState } from '#lib/searchState.svelte.ts';
+	import type { ConditionGroup } from '#lib/types.ts';
 	import GroupEditor from './GroupEditor.svelte';
 
 	let tree = $derived(searchState.draftQueryTree);

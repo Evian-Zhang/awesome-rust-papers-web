@@ -1,4 +1,4 @@
-import type { Condition, ConditionGroup, QueryTree } from '$lib/types';
+import type { Condition, ConditionGroup, QueryTree } from '#lib/types.ts';
 
 export function isConditionComplete(cond: Condition): boolean {
 	if (cond.values.length === 0) return false;

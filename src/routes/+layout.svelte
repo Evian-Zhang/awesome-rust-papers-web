@@ -1,7 +1,7 @@
 <script lang="ts">
 	import './layout.css';
-	import { base } from '$app/paths';
-	import { SITE_NAME, SITE_URL } from '$lib/site';
+	import { resolve } from '$app/paths';
+	import { SITE_NAME, SITE_URL } from '#lib/site.ts';
 
 	let { children } = $props();
 </script>
@@ -12,7 +12,7 @@
 		rel="alternate"
 		type="application/atom+xml"
 		title={`${SITE_NAME} feed`}
-		href={`${base}/feed.xml`}
+		href={resolve('/feed.xml')}
 	/>
 </svelte:head>
 

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Analytics from '$lib/components/Analytics.svelte';
-	import Header from '$lib/components/Header.svelte';
-	import PaperList from '$lib/components/PaperList.svelte';
-	import SearchBox from '$lib/components/SearchBox.svelte';
-	import QueryBuilder from '$lib/components/querybuilder/QueryBuilder.svelte';
-	import { searchState } from '$lib/searchState.svelte';
-	import { data } from '$lib/data';
+	import Analytics from '#lib/components/Analytics.svelte';
+	import Header from '#lib/components/Header.svelte';
+	import PaperList from '#lib/components/PaperList.svelte';
+	import SearchBox from '#lib/components/SearchBox.svelte';
+	import QueryBuilder from '#lib/components/querybuilder/QueryBuilder.svelte';
+	import { searchState } from '#lib/searchState.svelte.ts';
+	import { data } from '#lib/data.ts';
 
 	const filteredPapers = $derived(searchState.filteredResults.map((r) => r.paper));
 	const categoryCount = Object.keys(data.stats.categories).length;

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { FIELDS, fieldById } from '$lib/query/fields';
-	import type { Condition, ConditionOp } from '$lib/types';
+	import { FIELDS, fieldById } from '#lib/query/fields.ts';
+	import type { Condition, ConditionOp } from '#lib/types.ts';
 	import ValueEditor from './ValueEditor.svelte';
 
 	let {

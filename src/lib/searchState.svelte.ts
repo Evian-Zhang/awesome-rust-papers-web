@@ -1,10 +1,10 @@
-import { browser } from '$app/environment';
-import { compareByAddedAtThenTitle, papers } from '$lib/data';
-import { searchPapers, type SearchResult } from '$lib/search';
-import { evalQueryTree, hasConditions } from '$lib/query/evaluate';
-import { collectInvalidConditions } from '$lib/query/validate';
-import { decodeTreeParam, encodeTreeParam } from '$lib/query/serialize';
-import type { QueryTree, SearchMode } from '$lib/types';
+import { browser } from '$app/env';
+import { compareByAddedAtThenTitle, papers } from '#lib/data.ts';
+import { searchPapers, type SearchResult } from '#lib/search.ts';
+import { evalQueryTree, hasConditions } from '#lib/query/evaluate.ts';
+import { collectInvalidConditions } from '#lib/query/validate.ts';
+import { decodeTreeParam, encodeTreeParam } from '#lib/query/serialize.ts';
+import type { QueryTree, SearchMode } from '#lib/types.ts';
 
 export type SortOrder = 'relevance' | 'yearDesc' | 'yearAsc' | 'titleAsc' | 'referencedByDesc';
 

@@ -1,5 +1,5 @@
 import rawData from './generated/papers.json' with { type: 'json' };
-import type { Paper, PaperData, PaperRelations } from '$lib/types';
+import type { Paper, PaperData, PaperRelations } from '#lib/types.ts';
 
 export const data: PaperData = rawData as PaperData;
 

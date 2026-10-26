@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Paper } from '$lib/types';
-	import { theme } from '$lib/theme.svelte';
+	import type { Paper } from '#lib/types.ts';
+	import { theme } from '#lib/theme.svelte.ts';
 	import {
 		DARK_COLORS,
 		LIGHT_COLORS,
@@ -8,7 +8,7 @@
 		buildYearOption,
 		chart,
 		type TallyRow
-	} from '$lib/charts.svelte';
+	} from '#lib/charts.svelte.ts';
 
 	let { papers }: { papers: Paper[] } = $props();
 
