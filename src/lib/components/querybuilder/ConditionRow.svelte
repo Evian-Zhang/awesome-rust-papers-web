@@ -21,7 +21,7 @@
 		const op: ConditionOp = spec.operators.some((o) => o.id === condition.op)
 			? condition.op
 			: spec.operators[0].id;
-		onupdate({ ...condition, field: fieldId, op, values: [] });
+		onupdate({ ...condition, field: fieldId, op, value: undefined });
 	}
 
 	function changeOp(op: ConditionOp) {

@@ -5,11 +5,12 @@
 	import SearchBox from '#lib/components/SearchBox.svelte';
 	import QueryBuilder from '#lib/components/querybuilder/QueryBuilder.svelte';
 	import { searchState } from '#lib/searchState.svelte.ts';
-	import { data } from '#lib/data.ts';
+	import { data, publicationCount } from '#lib/data.ts';
 
 	const filteredPapers = $derived(searchState.filteredResults.map((r) => r.paper));
 	const categoryCount = Object.keys(data.stats.categories).length;
 	const venueCount = Object.keys(data.stats.venues).length;
+	const paperCount = publicationCount(data.papers);
 </script>
 
 <svelte:head>
@@ -21,7 +22,7 @@
 <main class="mx-auto max-w-6xl space-y-8 px-4 py-6">
 	<p class="text-sm text-gray-600 dark:text-gray-400">
 		A curated collection of
-		<span class="font-semibold text-gray-900 dark:text-gray-100">{data.totalPapers}</span>
+		<span class="font-semibold text-gray-900 dark:text-gray-100">{paperCount}</span>
 		Rust academic papers spanning
 		<span class="font-semibold text-gray-900 dark:text-gray-100">{categoryCount}</span>
 		categories and

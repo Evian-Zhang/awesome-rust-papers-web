@@ -70,7 +70,7 @@
 			id: nextConditionId(),
 			field: fieldId,
 			op: spec.operators[0].id,
-			values: []
+			value: undefined
 		};
 		const item: GroupItem = {
 			id: nextConditionId() + '-item',

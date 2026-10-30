@@ -17,6 +17,10 @@ export function compareByAddedAtThenTitle(a: Paper, b: Paper): number {
 	return a.title.localeCompare(b.title);
 }
 
+export function publicationCount(papers: readonly Pick<Paper, 'links'>[]): number {
+	return papers.reduce((total, paper) => total + 1 + paper.links.further.length, 0);
+}
+
 export interface AutocompleteCandidate {
 	id: string;
 	label: string;

@@ -1,8 +1,17 @@
+export interface FurtherEntry {
+	title: string;
+	link: string;
+	pdf?: string | null;
+	venue: string;
+	year: number;
+	bib?: string | null;
+}
+
 export interface PaperLinks {
 	link?: string | null;
 	pdf?: string | null;
 	repo?: string | null;
-	further: string[];
+	further: FurtherEntry[];
 }
 
 export interface PaperRelations {
@@ -52,7 +61,7 @@ export interface Condition {
 	id: string;
 	field: string;
 	op: ConditionOp;
-	values: (string | number)[];
+	value?: string | number;
 }
 
 export interface GroupItem {

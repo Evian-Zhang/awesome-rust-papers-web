@@ -80,8 +80,18 @@ def main():
         assert "addedAt" in paper, f"{pid}: missing addedAt"
         added_at = paper["addedAt"]
         assert is_iso_datetime(added_at), f"{pid}: bad addedAt {added_at!r}"
-        assert isinstance(paper["links"]["further"], list), f"{pid}: links.further is not an array"
-
+        further = paper["links"]["further"]
+        assert isinstance(further, list), f"{pid}: links.further is not an array"
+        for entry in further:
+            assert isinstance(entry, dict), f"{pid}: links.further entry is not an object"
+            assert isinstance(entry.get("title"), str), f"{pid}: links.further entry has no title"
+            assert isinstance(entry.get("link"), str), f"{pid}: links.further entry has no link"
+            assert entry.get("pdf") is None or isinstance(entry.get("pdf"), str), (
+                f"{pid}: links.further entry has a bad pdf"
+            )
+            assert isinstance(entry.get("venue"), str), f"{pid}: links.further entry has no venue"
+            assert is_plain_int(entry.get("year")), f"{pid}: links.further entry has a bad year"
+            assert isinstance(entry.get("bib"), str), f"{pid}: links.further entry has no bib"
         for key in RESOLVED_RELATION_KEYS:
             targets = check_string_array(pid, key, paper["relations"][key])
             for target in targets:
@@ -98,6 +108,8 @@ def main():
             tag_counts[tag] = tag_counts.get(tag, 0) + 1
         if paper["venue"]:
             venue_counts[paper["venue"]] = venue_counts.get(paper["venue"], 0) + 1
+        for entry in further:
+            venue_counts[entry["venue"]] = venue_counts.get(entry["venue"], 0) + 1
         year = str(paper["year"])
         year_counts[year] = year_counts.get(year, 0) + 1
 

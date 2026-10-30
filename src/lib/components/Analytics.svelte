@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Paper } from '#lib/types.ts';
 	import { theme } from '#lib/theme.svelte.ts';
+	import { publicationCount } from '#lib/data.ts';
 	import {
 		DARK_COLORS,
 		LIGHT_COLORS,
@@ -36,7 +37,9 @@
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local accumulator inside a $derived computation, never observed reactively; SvelteMap would only add proxy overhead
 		const counts = new Map<number, number>();
 		for (const paper of list) {
-			counts.set(paper.year, (counts.get(paper.year) ?? 0) + 1);
+			for (const year of [paper.year, ...paper.links.further.map((entry) => entry.year)]) {
+				counts.set(year, (counts.get(year) ?? 0) + 1);
+			}
 		}
 		return [...counts]
 			.map(([label, count]) => ({ label: String(label), count }))
@@ -44,10 +47,15 @@
 	}
 
 	const colors = $derived(theme.isDark ? DARK_COLORS : LIGHT_COLORS);
+	const publicationTotal = $derived(publicationCount(papers));
 	const yearData = $derived(tallyYears(papers));
 	const categoryData = $derived(tally(papers, (p) => p.categories));
 	const venueData = $derived(
-		tally(papers, (p) => (p.venue ? [p.venue] : [])).slice(0, VENUE_LIMIT)
+		tally(papers, (p) =>
+			[p.venue, ...p.links.further.map((entry) => entry.venue)].filter((value): value is string =>
+				Boolean(value)
+			)
+		).slice(0, VENUE_LIMIT)
 	);
 	const tagData = $derived(tally(papers, (p) => p.tags).slice(0, TAG_LIMIT));
 </script>
@@ -58,7 +66,7 @@
 >
 	<div class="mb-3 flex items-baseline justify-between">
 		<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Analytics</h2>
-		<span class="text-xs text-gray-500 dark:text-gray-400">based on {papers.length} papers</span>
+		<span class="text-xs text-gray-500 dark:text-gray-400">based on {publicationTotal} papers</span>
 	</div>
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
 		<div class="rounded-lg border border-gray-100 p-3 dark:border-gray-800">

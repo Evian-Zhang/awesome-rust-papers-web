@@ -7,7 +7,14 @@ const relationFields = new Set(
 );
 
 function searchableBlob(paper: Paper): string {
-	return [paper.title, paper.alias, paper.bib, paper.tags.join(' '), paper.categories.join(' ')]
+	return [
+		paper.title,
+		paper.alias,
+		paper.bib,
+		...paper.links.further.flatMap((entry) => [entry.title, entry.bib]),
+		paper.tags.join(' '),
+		paper.categories.join(' ')
+	]
 		.filter(Boolean)
 		.join(' ')
 		.toLowerCase();
@@ -16,7 +23,7 @@ function searchableBlob(paper: Paper): string {
 function evalEquality(paper: Paper, cond: Condition, value: string): boolean {
 	switch (cond.field) {
 		case 'venue':
-			return paper.venue === value;
+			return paper.venue === value || paper.links.further.some((entry) => entry.venue === value);
 		case 'category':
 			return paper.categories.includes(value);
 		case 'tag':
@@ -29,30 +36,32 @@ function evalEquality(paper: Paper, cond: Condition, value: string): boolean {
 }
 
 function evalNumberCondition(paper: Paper, cond: Condition): boolean {
-	const year = paper.year;
-	const nums = cond.values.map((v) => Number(v));
-	if (nums.length === 0 || nums.some(Number.isNaN)) return true;
-	switch (cond.op) {
-		case 'eq':
-			return year === nums[0];
-		case 'gte':
-			return year >= nums[0];
-		case 'lte':
-			return year <= nums[0];
-		default:
-			return false;
-	}
+	const target = cond.value === undefined ? Number.NaN : Number(cond.value);
+	if (Number.isNaN(target)) return true;
+	const years = [paper.year, ...paper.links.further.map((entry) => entry.year)];
+	return years.some((year) => {
+		switch (cond.op) {
+			case 'eq':
+				return year === target;
+			case 'gte':
+				return year >= target;
+			case 'lte':
+				return year <= target;
+			default:
+				return false;
+		}
+	});
 }
 
 export function evalCondition(paper: Paper, cond: Condition): boolean {
-	if (cond.values.length === 0) return true;
+	if (cond.value === undefined) return true;
 	switch (cond.field) {
 		case 'year':
 			return evalNumberCondition(paper, cond);
 		case 'text':
-			return searchableBlob(paper).includes(String(cond.values[0]).toLowerCase());
+			return searchableBlob(paper).includes(String(cond.value).toLowerCase());
 		default:
-			return evalEquality(paper, cond, String(cond.values[0]));
+			return evalEquality(paper, cond, String(cond.value));
 	}
 }
 

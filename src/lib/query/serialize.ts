@@ -16,7 +16,6 @@ const MAX_ENCODED_LENGTH = 8192;
 const MAX_DECODED_BYTES = 8192;
 const MAX_ITEMS = 200;
 const MAX_DEPTH = 10;
-const MAX_VALUES = 8;
 const MAX_VALUE_LENGTH = 256;
 
 function titleWithAlias(id: string): string {
@@ -29,16 +28,14 @@ function conditionText(cond: Condition): string {
 	const label = fieldById.get(cond.field)?.label ?? cond.field;
 	const op = OPERATOR_SYMBOLS[cond.op] ?? cond.op;
 	let value: string;
-	if (cond.values.length === 0) {
+	if (cond.value === undefined) {
 		value = '…';
+	} else if (cond.field === 'text') {
+		value = `"${cond.value}"`;
+	} else if (fieldById.get(cond.field)?.kind === 'relation') {
+		value = titleWithAlias(String(cond.value));
 	} else {
-		value = cond.values
-			.map((v) => {
-				if (cond.field === 'text') return `"${v}"`;
-				if (fieldById.get(cond.field)?.kind === 'relation') return titleWithAlias(String(v));
-				return String(v);
-			})
-			.join(', ');
+		value = String(cond.value);
 	}
 	return `${label} ${op} ${value}`;
 }
@@ -98,7 +95,7 @@ function encodeCondition(cond: Condition): pb.Condition {
 	return create(pb.ConditionSchema, {
 		field: cond.field,
 		operator: opToProto(cond.op),
-		values: cond.values.map(encodeValue)
+		value: cond.value === undefined ? undefined : encodeValue(cond.value)
 	});
 }
 
@@ -176,15 +173,10 @@ function decodeCondition(cond: pb.Condition, counter: DecodeCounter): Condition 
 	const op = opFromProto(cond.operator);
 	if (!op || !spec.operators.some((candidate) => candidate.id === op)) return null;
 
-	const values: (string | number)[] = [];
-	for (const value of cond.values) {
-		if (values.length >= MAX_VALUES) break;
-		const decoded = decodeValue(value, spec.kind);
-		if (decoded !== undefined) values.push(decoded);
-	}
-	if (values.length === 0) return null;
+	const value = cond.value === undefined ? undefined : decodeValue(cond.value, spec.kind);
+	if (value === undefined) return null;
 
-	return { id: `c-${++counter.conditionIds}`, field: cond.field, op, values };
+	return { id: `c-${++counter.conditionIds}`, field: cond.field, op, value };
 }
 
 function decodeNode(

@@ -31,7 +31,9 @@ message Group {
 message Condition {
   string field = 1;
   Operator operator = 2;
-  repeated Value values = 3;
+  // A condition always carries at most one value; a missing value means the
+  // condition is incomplete and is rejected on apply.
+  Value value = 3;
 }
 
 message Value {

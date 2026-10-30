@@ -1,9 +1,9 @@
 <script lang="ts">
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import ExternalLink from '@lucide/svelte/icons/external-link';
-	import { onDestroy } from 'svelte';
 	import { paperById } from '#lib/data.ts';
 	import { searchState } from '#lib/searchState.svelte.ts';
+	import BibPanel from './BibPanel.svelte';
+	import FurtherPublication from './FurtherPublication.svelte';
 	import PaperName from './PaperName.svelte';
 	import type { Paper } from '#lib/types.ts';
 
@@ -11,11 +11,7 @@
 
 	let showBib = $state(false);
 	let showFurther = $state(false);
-	let copied = $state(false);
-	let copyFailed = $state(false);
 	let expanded = $state<string | null>(null);
-
-	let copylTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const relationGroups = $derived(
 		[
@@ -64,25 +60,6 @@
 		event.preventDefault();
 		searchState.searchFor(title);
 	}
-
-	async function copyBib() {
-		if (!paper.bib) return;
-		try {
-			await navigator.clipboard.writeText(paper.bib);
-			copied = true;
-			copyFailed = false;
-		} catch {
-			copyFailed = true;
-			copied = false;
-		}
-		clearTimeout(copylTimer);
-		copylTimer = setTimeout(() => {
-			copied = false;
-			copyFailed = false;
-		}, 2000);
-	}
-
-	onDestroy(() => clearTimeout(copylTimer));
 </script>
 
 <article
@@ -153,47 +130,23 @@
 				onclick={() => (showFurther = !showFurther)}
 				aria-expanded={showFurther}
 			>
-				Further reading {paper.links.further.length}
+				Related publications {paper.links.further.length}
 			</button>
 		{/if}
 	</div>
 
 	{#if showFurther && paper.links.further.length > 0}
 		<div
-			class="mt-2 rounded-md border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800/60"
+			class="mt-2 space-y-2 rounded-md border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800/60"
 		>
-			<ul class="max-h-40 space-y-1 overflow-y-auto">
-				{#each paper.links.further as url (url)}
-					<li>
-						<a
-							href={url}
-							target="_blank"
-							rel="noreferrer external"
-							class="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs text-rust-700 hover:bg-rust-50 dark:text-rust-400 dark:hover:bg-rust-950"
-						>
-							<span class="truncate" title={url}>{url.replace(/^https?:\/\//, '')}</span>
-							<ExternalLink size={12} class="shrink-0 text-gray-400 dark:text-gray-500" />
-						</a>
-					</li>
-				{/each}
-			</ul>
+			{#each paper.links.further as entry (entry.link)}
+				<FurtherPublication {entry} />
+			{/each}
 		</div>
 	{/if}
 
 	{#if showBib && paper.bib}
-		<div
-			class="relative mt-2 rounded-md border border-gray-200 bg-gray-50 p-2 pr-16 dark:border-gray-700 dark:bg-gray-800/60"
-		>
-			<button
-				type="button"
-				class="absolute top-2 right-2 rounded-md border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-600 hover:border-rust-600 hover:text-rust-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-rust-400 dark:hover:text-rust-400"
-				onclick={copyBib}
-			>
-				{copied ? 'Copied!' : copyFailed ? 'Copy failed' : 'Copy'}
-			</button>
-			<pre
-				class="max-h-56 overflow-auto font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-gray-700 dark:text-gray-300">{paper.bib}</pre>
-		</div>
+		<BibPanel bib={paper.bib} />
 	{/if}
 
 	{#if relationGroups.length > 0}

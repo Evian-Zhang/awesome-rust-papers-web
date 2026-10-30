@@ -34,14 +34,14 @@
 		const key = `${condition.field}|${condition.op}`;
 		if (key === lastFieldKey) return;
 		lastFieldKey = key;
-		numberRaw = String(condition.values[0] ?? '');
+		numberRaw = String(condition.value ?? '');
 		enumQuery = '';
 		addOpen = false;
 		relationQuery = '';
 		relationOpen = false;
 	});
 
-	let selectedValue = $derived(condition.values[0] ?? undefined);
+	let selectedValue = $derived(condition.value);
 	let selectedId = $derived(selectedValue === undefined ? undefined : String(selectedValue));
 
 	let enumOptions = $derived(spec?.kind === 'enum' ? spec.options() : []);
@@ -69,12 +69,12 @@
 		}
 	});
 
-	function setValues(values: (string | number)[]) {
-		onupdate({ ...condition, values });
+	function setValue(value: string | number | undefined) {
+		onupdate({ ...condition, value });
 	}
 
 	function clearValues() {
-		setValues([]);
+		setValue(undefined);
 	}
 
 	function handleNumberInput(event: Event) {
@@ -82,21 +82,21 @@
 		numberRaw = raw;
 		const trimmed = raw.trim();
 		if (!trimmed) {
-			if (condition.values.length) setValues([]);
+			if (condition.value !== undefined) setValue(undefined);
 			return;
 		}
 		const n = Number(trimmed);
 		if (Number.isNaN(n)) return;
-		if (condition.values[0] !== n) setValues([n]);
+		if (condition.value !== n) setValue(n);
 	}
 
 	function handleTextInput(event: Event) {
 		const value = (event.currentTarget as HTMLInputElement).value;
-		setValues(value ? [value] : []);
+		setValue(value || undefined);
 	}
 
 	function chooseEnum(value: string) {
-		setValues([value]);
+		setValue(value);
 		enumQuery = '';
 		addOpen = false;
 	}
@@ -107,7 +107,7 @@
 	}
 
 	function selectRelation(id: string) {
-		setValues([id]);
+		setValue(id);
 		relationQuery = '';
 		relationOpen = false;
 	}
@@ -153,7 +153,7 @@
 	<input
 		type="text"
 		class="control w-64 max-w-full"
-		value={String(condition.values[0] ?? '')}
+		value={String(condition.value ?? '')}
 		oninput={handleTextInput}
 		aria-label="Text value"
 		placeholder="Enter text"

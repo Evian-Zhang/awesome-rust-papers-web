@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { publicationCount } from '#lib/data.ts';
 	import { searchState, type SortOrder } from '#lib/searchState.svelte.ts';
 	import PaperCard from './PaperCard.svelte';
 
@@ -14,6 +15,10 @@
 			? [{ value: 'relevance' as SortOrder, label: 'Relevance' }, ...BASE_SORT_OPTIONS]
 			: BASE_SORT_OPTIONS
 	);
+
+	const resultCount = $derived(
+		publicationCount(searchState.filteredResults.map((result) => result.paper))
+	);
 </script>
 
 <section>
@@ -21,7 +26,7 @@
 		<div class="flex items-baseline gap-3 text-sm text-gray-500 dark:text-gray-400">
 			<span aria-live="polite">
 				<span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100">
-					{searchState.filteredResults.length}
+					{resultCount}
 				</span>
 				papers
 			</span>

@@ -1,8 +1,8 @@
 import type { Condition, ConditionGroup, QueryTree } from '#lib/types.ts';
 
 export function isConditionComplete(cond: Condition): boolean {
-	if (cond.values.length === 0) return false;
-	if (cond.field === 'year') return !Number.isNaN(Number(cond.values[0]));
+	if (cond.value === undefined) return false;
+	if (cond.field === 'year') return !Number.isNaN(Number(cond.value));
 	return true;
 }
 
